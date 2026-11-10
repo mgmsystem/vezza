@@ -1,0 +1,48 @@
+# IDEs e configurações locais
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Artefatos .NET
+**/bin/
+**/obj/
+TestResults/
+coverage/
+*.trx
+
+# Segredos e configurações locais
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+
+# Bancos e arquivos locais
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Publicação e temporários
+publish/
+artifacts/
+*.tmp
+*.log
+
+# Rascunhos locais anteriores à consolidação
+Analise/
+execBuild.txt
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

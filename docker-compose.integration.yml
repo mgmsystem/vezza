@@ -1,0 +1,33 @@
+services:
+  mysql-integration:
+    image: mysql:8.4.13
+    container_name: vezza-mysql-integration
+    environment:
+      MYSQL_DATABASE: vezza_integration
+      MYSQL_USER: vezza_test
+      MYSQL_PASSWORD: vezza_test_password
+      MYSQL_ROOT_PASSWORD: vezza_test_root_password
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --log-bin-trust-function-creators=1
+    ports:
+      - "127.0.0.1:33070:3306"
+    volumes:
+      - vezza_mysql_integration_data:/var/lib/mysql
+      - ./Vezza.Infra/Database/Scripts/CriacaoTabelas.sql:/docker-entrypoint-initdb.d/01-criacao-tabelas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uvezza_test -pvezza_test_password --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    restart: "no"
+    networks:
+      - vezza-integration
+
+volumes:
+  vezza_mysql_integration_data:
+
+networks:
+  vezza-integration:

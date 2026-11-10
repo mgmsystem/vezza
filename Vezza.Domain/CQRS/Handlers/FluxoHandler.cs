@@ -14,11 +14,16 @@ public class FluxoHandler :
 {
     private readonly IFluxoRepository _repository;
     private readonly ILogger<FluxoHandler> _logger;
+    private readonly IDemoModeService _demoMode;
 
-    public FluxoHandler(IFluxoRepository repository, ILogger<FluxoHandler> logger)
+    public FluxoHandler(
+        IFluxoRepository repository,
+        ILogger<FluxoHandler> logger,
+        IDemoModeService demoMode = null)
     {
         _repository = repository;
         _logger = logger;
+        _demoMode = demoMode;
     }
 
     public async Task<GenericResult> Handle(CreateFluxoCommand command)
@@ -31,11 +36,16 @@ public class FluxoHandler :
             if (!command.IsValid())
                 return new GenericResult(400, command.Errors());
 
-            var fluxo = FluxoService.CreateFluxoFromCommand(command);
+            async Task<GenericResult> Create()
+            {
+                var fluxo = FluxoService.CreateFluxoFromCommand(command);
+                await _repository.Save(fluxo);
+                return new GenericResult(201, fluxo, $"v1/fluxos/{fluxo.FluxoId}");
+            }
 
-            await _repository.Save(fluxo);
-
-            return new GenericResult(201, fluxo, $"v1/fluxos/{fluxo.FluxoId}");
+            return _demoMode == null
+                ? await Create()
+                : await _demoMode.ExecuteCreateAsync(DemoResource.Fluxo, Create);
         }
         catch (Exception e)
         {

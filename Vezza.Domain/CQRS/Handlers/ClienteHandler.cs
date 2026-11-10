@@ -13,15 +13,18 @@ public class ClienteHandler :
     private readonly IClienteRepository _repository;
     private readonly IObraRepository _obraRepository;
     private readonly ILogger<ClienteHandler> _logger;
+    private readonly IDemoModeService _demoMode;
 
     public ClienteHandler(
         IClienteRepository repository,
         IObraRepository obraRepository,
-        ILogger<ClienteHandler> logger)
+        ILogger<ClienteHandler> logger,
+        IDemoModeService demoMode = null)
     {
         _repository = repository;
         _obraRepository = obraRepository;
         _logger = logger;
+        _demoMode = demoMode;
     }
 
     public async Task<GenericResult> Handle(CreateClienteCommand command)
@@ -34,11 +37,16 @@ public class ClienteHandler :
             if (!command.IsValid())
                 return new GenericResult(400, command.Errors());
 
-            var cliente = ClienteService.CreateClienteFromCommand(command);
+            async Task<GenericResult> Create()
+            {
+                var cliente = ClienteService.CreateClienteFromCommand(command);
+                await _repository.Save(cliente);
+                return new GenericResult(201, cliente, $"v1/clientes/{cliente.ClienteId}");
+            }
 
-            await _repository.Save(cliente);
-
-            return new GenericResult(201, cliente, $"v1/clientes/{cliente.ClienteId}");
+            return _demoMode == null
+                ? await Create()
+                : await _demoMode.ExecuteCreateAsync(DemoResource.Cliente, Create);
         }
         catch (Exception e)
         {

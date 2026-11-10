@@ -25,6 +25,8 @@ var jwtKey = GetRequiredConfiguration(
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IDemoModeService, DemoModeService>();
 ConfigureSwaggerGen(builder);
 ConfigureAuthentication(builder);
 ConfigureMvc(builder);
@@ -53,6 +55,7 @@ app.UseForwardedHeaders(forwardedHeadersOptions);
 app.UseHttpsRedirection();
 app.UseMiddleware<PublicEndpointRateLimitMiddleware>();
 app.UseAuthentication();
+app.UseMiddleware<DemoAccountProtectionMiddleware>();
 app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();

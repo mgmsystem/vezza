@@ -4,6 +4,7 @@ using Vezza.Domain.CQRS.Commands.Usuarios;
 using Vezza.Domain.CQRS.Handlers;
 using Vezza.Domain.CQRS.Results;
 using Vezza.Domain.Repositories;
+using Vezza.Domain.Services;
 
 namespace Vezza.Api.Controllers;
 
@@ -81,8 +82,16 @@ public class UsuarioController : ControllerBase
     [HttpPost("v1/usuarios/registrar")]
     public async Task<IActionResult> RegistrarAsync(
                     [FromBody] RegistrarCommand command,
-                    [FromServices] UsuarioHandler handler)
+                    [FromServices] UsuarioHandler handler,
+                    [FromServices] IUsuarioRepository repository,
+                    [FromServices] IDemoModeService demoMode)
     {
+        if (!demoMode.PublicRegistrationEnabled || (await repository.GetAll()).Any())
+        {
+            var forbidden = new GenericResult(403, "O cadastro público de usuários está desabilitado.");
+            return StatusCode(forbidden.StatusCode, forbidden);
+        }
+
         var result = await handler.Handle(command);
 
         if (result.StatusCode == 201)

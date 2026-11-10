@@ -13,13 +13,16 @@ public class OrcamentoItemHandler :
 {
     private readonly IOrcamentoItemRepository _repository;
     private readonly ILogger<OrcamentoItemHandler> _logger;
+    private readonly IDemoModeService _demoMode;
 
     public OrcamentoItemHandler(
         IOrcamentoItemRepository repository,
-        ILogger<OrcamentoItemHandler> logger)
+        ILogger<OrcamentoItemHandler> logger,
+        IDemoModeService demoMode = null)
     {
         _repository = repository;
         _logger = logger;
+        _demoMode = demoMode;
     }
 
     public async Task<GenericResult> Handle(CreateOrcamentoItemCommand command)
@@ -32,11 +35,16 @@ public class OrcamentoItemHandler :
             if (!command.IsValid())
                 return new GenericResult(400, command.Errors());
 
-            var orcamentoItem = OrcamentoItemService.CreateOrcamentoItemFromCommand(command);
+            async Task<GenericResult> Create()
+            {
+                var orcamentoItem = OrcamentoItemService.CreateOrcamentoItemFromCommand(command);
+                await _repository.Save(orcamentoItem);
+                return new GenericResult(201, orcamentoItem, $"v1/orcamento-items/{orcamentoItem.OrcamentoItemId}");
+            }
 
-            await _repository.Save(orcamentoItem);
-
-            return new GenericResult(201, orcamentoItem, $"v1/orcamento-items/{orcamentoItem.OrcamentoItemId}");
+            return _demoMode == null
+                ? await Create()
+                : await _demoMode.ExecuteCreateAsync(DemoResource.OrcamentoItem, Create);
         }
         catch (Exception e)
         {

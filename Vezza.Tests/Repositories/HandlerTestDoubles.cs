@@ -5,6 +5,8 @@ using System.Threading;
 using Vezza.Domain.Entities;
 using Vezza.Domain.Repositories;
 using Vezza.Shared.Security.Services;
+using Vezza.Domain.CQRS.Results;
+using Vezza.Domain.Services;
 
 namespace Vezza.Tests.Repositories;
 
@@ -340,5 +342,30 @@ internal class FakeConfigurationService : IConfigurationService
     public string GetApiKey()
     {
         return string.Empty;
+    }
+}
+
+internal class FakeDemoModeService : IDemoModeService
+{
+    public bool IsDemoRequest { get; set; }
+    public bool PublicRegistrationEnabled { get; set; }
+    public string DemoEmail { get; set; } = "demo@vezza.app";
+    public bool BlockCreates { get; set; }
+    public DemoResource? LastResource { get; private set; }
+
+    public bool IsDemoEmail(string email)
+    {
+        return !string.IsNullOrWhiteSpace(email) &&
+               string.Equals(email, DemoEmail, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public async Task<GenericResult> ExecuteCreateAsync(
+        DemoResource resource,
+        Func<Task<GenericResult>> createAction)
+    {
+        LastResource = resource;
+        return BlockCreates
+            ? new GenericResult(409, Vezza.Api.Services.DemoModeService.LimitMessage)
+            : await createAction();
     }
 }

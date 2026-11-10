@@ -24,6 +24,16 @@ function renderLogin() {
 }
 
 describe('autenticação', () => {
+  it('preenche as credenciais públicas ao solicitar a demonstração', async () => {
+    renderLogin()
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: /experimentar demonstração/i }))
+
+    expect(screen.getByLabelText('E-mail')).toHaveValue('demo@vezza.app')
+    expect(screen.getByLabelText('Senha')).toHaveValue('VezzaDemo2026!')
+  })
+
   it('realiza login bem-sucedido e persiste a sessão', async () => {
     const token = makeToken()
     vi.stubGlobal('fetch', vi.fn().mockImplementation(() => jsonResponse({ statusCode: 200, data: { token, type: 'Bearer' } })))

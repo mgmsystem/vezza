@@ -14,15 +14,18 @@ public class ObraHandler :
     private readonly IObraRepository _repository;
     private readonly IOrcamentoRepository _orcamentoRepository;
     private readonly ILogger<ObraHandler> _logger;
+    private readonly IDemoModeService _demoMode;
 
     public ObraHandler(
         IObraRepository repository,
         IOrcamentoRepository orcamentoRepository,
-        ILogger<ObraHandler> logger)
+        ILogger<ObraHandler> logger,
+        IDemoModeService demoMode = null)
     {
         _repository = repository;
         _orcamentoRepository = orcamentoRepository;
         _logger = logger;
+        _demoMode = demoMode;
     }
 
     public async Task<GenericResult> Handle(CreateObraCommand command)
@@ -35,11 +38,16 @@ public class ObraHandler :
             if (!command.IsValid())
                 return new GenericResult(400, command.Errors());
 
-            var obra = ObraService.CreateObraFromCommand(command);
+            async Task<GenericResult> Create()
+            {
+                var obra = ObraService.CreateObraFromCommand(command);
+                await _repository.Save(obra);
+                return new GenericResult(201, obra, $"v1/obras/{obra.ObraId}");
+            }
 
-            await _repository.Save(obra);
-
-            return new GenericResult(201, obra, $"v1/obras/{obra.ObraId}");
+            return _demoMode == null
+                ? await Create()
+                : await _demoMode.ExecuteCreateAsync(DemoResource.Obra, Create);
         }
         catch (Exception e)
         {

@@ -22,13 +22,15 @@ public class UsuarioHandler :
     private readonly IEmailService _emailService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<UsuarioHandler> _logger;
+    private readonly IDemoModeService _demoMode;
 
     public UsuarioHandler(IUsuarioRepository repository, 
                             IAutorizacaoRepository autorizacaoRepository, 
                             TokenUtils tokenUtils,
                             IEmailService emailService,
                             IUnitOfWork unitOfWork,
-                            ILogger<UsuarioHandler> logger)
+                            ILogger<UsuarioHandler> logger,
+                            IDemoModeService demoMode = null)
     {
         _repository = repository;
         _autorizacaoRepository = autorizacaoRepository;
@@ -36,6 +38,7 @@ public class UsuarioHandler :
         _emailService = emailService;
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _demoMode = demoMode;
     }
 
     public async Task<GenericResult> Handle(CreateUsuarioCommand command)
@@ -82,6 +85,9 @@ public class UsuarioHandler :
             if (usuario == null)
                 return GenericResult.NotFound();
 
+            if (_demoMode?.IsDemoEmail(usuario.Email) == true)
+                return DemoAccountForbidden();
+
             usuario = Services.UsuarioService.UpdataUsuarioFromCommand(command, usuario);            
 
             await _repository.Update(usuario);
@@ -111,6 +117,9 @@ public class UsuarioHandler :
 
             if (data == null)
                 return GenericResult.NotFound();
+
+            if (_demoMode?.IsDemoEmail(data.Email) == true)
+                return DemoAccountForbidden();
 
             data = await _repository.Delete(data);
 
@@ -198,6 +207,9 @@ public class UsuarioHandler :
             if (!command.IsValid())
                 return new GenericResult(400, command.Errors());
 
+            if (_demoMode?.IsDemoEmail(command.Email) == true)
+                return DemoAccountForbidden();
+
             await _unitOfWork.BeginTransaction();
 
             var usuario = await _repository.GetByEmail(command.Email);
@@ -270,6 +282,9 @@ public class UsuarioHandler :
             if (!command.IsValid())
                 return new GenericResult(400, command.Errors());
 
+            if (_demoMode?.IsDemoEmail(command.Email) == true)
+                return DemoAccountForbidden();
+
             var usuario = await _repository.GetByEmail(command.Email);
 
             if (usuario == null)
@@ -306,4 +321,7 @@ public class UsuarioHandler :
             return GenericResult.InternalServerError();
         }
     }
+
+    private static GenericResult DemoAccountForbidden() =>
+        new(403, "A conta de demonstração não permite gerenciamento ou alteração de senha.");
 }

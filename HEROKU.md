@@ -35,11 +35,32 @@ heroku config:set ASPNETCORE_ENVIRONMENT=Production --app <nome-do-app>
 heroku config:set JwtKey="<chave-aleatoria-longa>" --app <nome-do-app>
 heroku config:set Database__SslMode=Required --app <nome-do-app>
 heroku config:set Database__MaximumPoolSize=5 --app <nome-do-app>
+heroku config:set DemoMode__Enabled=true --app <nome-do-app>
+heroku config:set DemoMode__Email=demo@vezza.app --app <nome-do-app>
+heroku config:set Security__PublicRegistrationEnabled=false --app <nome-do-app>
 ```
 
 O Heroku fornece `PORT` automaticamente. A aplicação lê `JAWSDB_URL`, converte a URL para o formato aceito pelo provider MySQL e usa pool pequeno. `SslMode=Required` exige criptografia em trânsito, mas não substitui validação de CA. Se o painel do JawsDB fornecer uma CA compatível com o provider e o plano, prefira `VerifyCA` ou `VerifyFull` após validar a configuração.
 
 Configure `Smtp__*` apenas se a recuperação de acesso por e-mail for demonstrada. Valores sensíveis devem permanecer em Config Vars.
+
+### Criar o proprietário e a conta demo
+
+Em uma instalação sem usuários, habilite temporariamente o bootstrap:
+
+```powershell
+heroku config:set Security__PublicRegistrationEnabled=true --app vezza
+```
+
+Envie uma única requisição HTTPS para `POST /v1/usuarios/registrar` com o nome, e-mail e senha forte do proprietário. O backend recusa o autorregistro se já existir qualquer usuário. Confirme o login e desabilite novamente:
+
+```powershell
+heroku config:set Security__PublicRegistrationEnabled=false --app vezza
+```
+
+Autenticado como proprietário, crie a conta demonstrativa por `POST /v1/usuarios`, usando exatamente o e-mail configurado em `DemoMode__Email` e as credenciais públicas documentadas no README. Esse fluxo aplica o mesmo `PasswordHasher` usado em qualquer cadastro; não insira hash ou senha manualmente no Adminer.
+
+Não altere o e-mail da conta diretamente no banco. O modo demo só reconhece a identidade quando o claim do JWT coincide com `DemoMode__Email`.
 
 ## 4. Criar o esquema uma única vez
 

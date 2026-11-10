@@ -35,6 +35,9 @@ Em outros ambientes, use um cofre de segredos ou variáveis. Chaves hierárquica
 - `Database__SslMode` e `Database__MaximumPoolSize` controlam TLS e pool do MySQL remoto
 - `Smtp__Host`, `Smtp__Port`, `Smtp__Username`, `Smtp__Password`, `Smtp__SenderEmail`, `Smtp__SenderDisplayName` e `Smtp__EnableSsl`
 - `Security__PublicEndpointRateLimit__PermitLimit` e `Security__PublicEndpointRateLimit__WindowSeconds`
+- `Security__PublicRegistrationEnabled` habilita o bootstrap do primeiro usuário; mantenha `false` em produção após o cadastro
+- `DemoMode__Enabled` ativa as proteções do ambiente demonstrativo
+- `DemoMode__Email` identifica a conta demo pelo claim de e-mail do JWT
 - `ApiKeyName` e `ApiKey` são legadas e atualmente não protegem endpoints
 
 `Vezza.Api/appsettings.Example.json` é apenas uma referência estrutural. Não grave segredos em arquivos versionados.

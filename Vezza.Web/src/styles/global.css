@@ -31,6 +31,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .mobile-brand { display: none; }
 .login-card h2 { margin: 13px 0 9px; color: var(--navy); font: 750 34px/1.2 'Segoe UI'; letter-spacing: -1.2px; }
 .login-intro { margin: 0 0 34px; color: #708096; line-height: 1.55; }
+.demo-access-button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #cfe7e2; border-radius: 9px; color: #176f61; text-align: left; background: #f2fbf9; transition: border-color .2s, background .2s; }
+.demo-access-button:hover:not(:disabled) { border-color: #91cfc2; background: #eaf8f5; }
+.demo-access-button:disabled { cursor: wait; opacity: .65; }
+.demo-access-button span, .demo-access-button strong, .demo-access-button small { display: block; }
+.demo-access-button strong { font-size: 12px; }
+.demo-access-button small { margin-top: 3px; color: #6c928a; font-size: 10px; }
 .login-card label { display: block; margin: 18px 0 8px; color: #273750; font-size: 13px; font-weight: 700; }
 .login-card input { width: 100%; height: 52px; padding: 0 16px; border: 1px solid #dce3ea; border-radius: 9px; color: #17233a; background: white; transition: .2s; }
 .login-card input::placeholder { color: #9ba8b7; }

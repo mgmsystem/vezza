@@ -19,6 +19,20 @@ Cliente → Obra → Orçamento → Itens do orçamento
 - Gerenciamento de itens dentro do orçamento.
 - Pesquisa local, estados de carregamento, vazio e erro e confirmações de exclusão.
 - Layout administrativo responsivo para desktop e dispositivos móveis.
+- Modo de demonstração com credenciais públicas, CRUD real e limite de cinco registros por categoria para a conta demo.
+
+## Acesso de demonstração
+
+O ambiente público de portfólio utiliza uma conta exclusiva e dados descartáveis:
+
+```text
+E-mail: demo@vezza.app
+Senha:  VezzaDemo2026!
+```
+
+Na tela de login, use **Experimentar demonstração** para preencher esses campos. O botão não simula autenticação: o acesso continua sendo validado pela API e a senha permanece armazenada somente como hash no MySQL.
+
+A conta pode consultar, cadastrar, editar e excluir dados de negócio. Inclusões feitas por ela são limitadas a cinco registros em cada uma destas categorias: clientes, obras, orçamentos, itens e fluxos. Excluir um registro libera uma nova inclusão. A conta demo não pode gerenciar usuários nem alterar ou recuperar sua senha.
 
 ### API
 
@@ -82,6 +96,9 @@ Variáveis obrigatórias fora de desenvolvimento:
 | `ConnectionStrings__connectionString` | Conexão MySQL |
 | `JwtKey` | Assinatura dos tokens JWT |
 | `Smtp__*` | Envio de recuperação de acesso, quando utilizado |
+| `DemoMode__Enabled` | Ativa limites e restrições da conta demo |
+| `DemoMode__Email` | E-mail que identifica a conta demonstrativa |
+| `Security__PublicRegistrationEnabled` | Bootstrap controlado do primeiro usuário; deve ficar desativado em produção |
 
 ## Executar localmente
 
@@ -154,6 +171,7 @@ Os testes do frontend simulam as respostas HTTP e não acessam o banco. Os teste
 - A implantação separada do frontend exigirá CORS restrito à origem publicada.
 - `Vezza.Api/wwwroot` preserva um frontend AngularJS legado; a interface React está em `Vezza.Web`.
 - Os testes de integração MySQL não são executados no workflow padrão de CI.
+- Todos os usuários continuam compartilhando os mesmos dados; o modo demo não adiciona propriedade por usuário.
 
 ## Documentação
 

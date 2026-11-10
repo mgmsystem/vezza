@@ -16,18 +16,21 @@ public class OrcamentoHandler :
     private readonly IFluxoRepository _fluxoRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<OrcamentoHandler> _logger;
+    private readonly IDemoModeService _demoMode;
 
     public OrcamentoHandler(IOrcamentoRepository repository,
                                 IOrcamentoItemRepository orcamentoItemRepository,
                                 IFluxoRepository fluxoRepository,
                                 IUnitOfWork unitOfWork,
-                                ILogger<OrcamentoHandler> logger)
+                                ILogger<OrcamentoHandler> logger,
+                                IDemoModeService demoMode = null)
     {
         _repository = repository;
         _orcamentoItemRepository = orcamentoItemRepository;
         _fluxoRepository = fluxoRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _demoMode = demoMode;
     }
 
     public async Task<GenericResult> Handle(CreateOrcamentoCommand command)
@@ -40,11 +43,16 @@ public class OrcamentoHandler :
             if (!command.IsValid())
                 return new GenericResult(400, command.Errors());
 
-            var orcamento = OrcamentoService.CreateOrcamentoFromCommand(command);
+            async Task<GenericResult> Create()
+            {
+                var orcamento = OrcamentoService.CreateOrcamentoFromCommand(command);
+                await _repository.Save(orcamento);
+                return new GenericResult(201, orcamento, $"v1/orcamentos/{orcamento.OrcamentoId}");
+            }
 
-            await _repository.Save(orcamento);
-
-            return new GenericResult(201, orcamento, $"v1/orcamentos/{orcamento.OrcamentoId}");
+            return _demoMode == null
+                ? await Create()
+                : await _demoMode.ExecuteCreateAsync(DemoResource.Orcamento, Create);
         }
         catch (Exception e)
         {

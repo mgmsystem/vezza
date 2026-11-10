@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { useAuth } from '../features/auth/auth-context'
 import { ApiError } from '../services/api-client'
+import { DEMO_CREDENTIALS } from '../features/auth/demo-credentials'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -43,6 +44,12 @@ export function LoginPage() {
     }
   }
 
+  function fillDemoCredentials() {
+    setEmail(DEMO_CREDENTIALS.email)
+    setPassword(DEMO_CREDENTIALS.password)
+    setError('')
+  }
+
   return (
     <div className="login-page">
       <section className="login-story" aria-label="Apresentação do Vezza">
@@ -64,6 +71,11 @@ export function LoginPage() {
           <span className="login-kicker">Bem-vindo de volta</span>
           <h2>Acesse sua conta</h2>
           <p className="login-intro">Use suas credenciais para entrar no ambiente de gestão.</p>
+
+          <button className="demo-access-button" type="button" onClick={fillDemoCredentials} disabled={isLoading}>
+            <Icon name="clients" size={18} />
+            <span><strong>Experimentar demonstração</strong><small>Preenche a conta pública do portfólio</small></span>
+          </button>
 
           <form onSubmit={handleSubmit} noValidate>
             <label htmlFor="email">E-mail</label>

@@ -7,6 +7,7 @@ public class PublicEndpointRateLimitMiddleware
     private static readonly HashSet<string> LimitedPaths = new(StringComparer.OrdinalIgnoreCase)
     {
         "/v1/usuarios/autenticar",
+        "/v1/usuarios/registrar",
         "/v1/usuarios/autorizacao",
         "/v1/usuarios/alterar-senha"
     };

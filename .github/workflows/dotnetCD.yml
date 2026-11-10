@@ -1,0 +1,140 @@
+name: CD - Heroku
+
+on:
+  workflow_call:
+    secrets:
+      HEROKU_API_KEY:
+        description: Token da conta autorizada a publicar o aplicativo vezza
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: heroku-vezza-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Container de producao
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      HEROKU_APP_NAME: vezza
+      HEROKU_REGISTRY: registry.heroku.com
+      HEROKU_IMAGE: registry.heroku.com/vezza/web
+
+    steps:
+      - name: Checkout do commit aprovado
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Confirmar commit e plataforma Docker
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          docker version
+          docker buildx version
+
+      - name: Autenticar no Heroku Container Registry
+        shell: bash
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$HEROKU_API_KEY" |
+            docker login --username=_ --password-stdin "$HEROKU_REGISTRY"
+
+      - name: Criar builder isolado
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx create \
+            --name vezza-heroku-builder \
+            --driver docker-container \
+            --use
+          docker buildx inspect --bootstrap
+
+      - name: Construir e enviar imagem Docker V2 Schema 2
+        shell: bash
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: "1"
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --builder vezza-heroku-builder \
+            --platform linux/amd64 \
+            --provenance=false \
+            --sbom=false \
+            --output "type=registry,name=${HEROKU_IMAGE},push=true,oci-mediatypes=false,compression=gzip,force-compression=true" \
+            --metadata-file "$RUNNER_TEMP/vezza-build-metadata.json" \
+            .
+
+      - name: Validar manifesto publicado
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_media_type='application/vnd.docker.distribution.manifest.v2+json'
+          metadata_file="$RUNNER_TEMP/vezza-build-metadata.json"
+          remote_manifest="$RUNNER_TEMP/vezza-remote-manifest.json"
+
+          metadata_media_type="$(jq -r '.["containerimage.descriptor"].mediaType // empty' "$metadata_file")"
+          image_id="$(jq -r '.["containerimage.config.digest"] // empty' "$metadata_file")"
+
+          if [[ "$metadata_media_type" != "$expected_media_type" ]]; then
+            echo "Formato local incompativel: ${metadata_media_type:-ausente}" >&2
+            exit 1
+          fi
+
+          if [[ ! "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Identificador da imagem ausente ou invalido." >&2
+            exit 1
+          fi
+
+          docker buildx imagetools inspect --raw "$HEROKU_IMAGE" > "$remote_manifest"
+          remote_media_type="$(jq -r '.mediaType // empty' "$remote_manifest")"
+
+          if [[ "$remote_media_type" != "$expected_media_type" ]]; then
+            echo "Formato remoto incompativel: ${remote_media_type:-ausente}" >&2
+            exit 1
+          fi
+
+          echo "Manifesto Docker V2 Schema 2 confirmado para linux/amd64."
+          echo "image_id=$image_id" >> "$GITHUB_OUTPUT"
+
+      - name: Criar release no Heroku
+        shell: bash
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          IMAGE_ID: ${{ steps.image.outputs.image_id }}
+        run: |
+          set -euo pipefail
+          payload="$RUNNER_TEMP/heroku-release-payload.json"
+          response="$RUNNER_TEMP/heroku-release-response.json"
+
+          jq -n --arg image_id "$IMAGE_ID" \
+            '{updates: [{type: "web", docker_image: $image_id}]}' > "$payload"
+
+          curl --fail-with-body --silent --show-error \
+            --request PATCH \
+            --url "https://api.heroku.com/apps/${HEROKU_APP_NAME}/formation" \
+            --header "Accept: application/vnd.heroku+json; version=3.docker-releases" \
+            --header "Authorization: Bearer ${HEROKU_API_KEY}" \
+            --header "Content-Type: application/json" \
+            --data-binary "@$payload" \
+            --output "$response"
+
+          echo "Release solicitado para o aplicativo ${HEROKU_APP_NAME}."
+
+      - name: Encerrar sessao e remover builder
+        if: always()
+        shell: bash
+        run: |
+          docker logout "$HEROKU_REGISTRY" || true
+          docker buildx rm vezza-heroku-builder || true

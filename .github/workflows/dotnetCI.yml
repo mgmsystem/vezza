@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restaurar dependências
+        run: dotnet restore Vezza.sln
+
+      - name: Compilar em Release
+        run: dotnet build Vezza.sln --configuration Release --no-restore
+
+      - name: Executar testes sem infraestrutura externa
+        run: dotnet test Vezza.sln --configuration Release --no-build --filter "TestCategory!=Integration"
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: Vezza.Web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: Vezza.Web/package-lock.json
+      - name: Instalar dependências
+        run: npm ci
+      - name: Verificar TypeScript
+        run: npm run typecheck
+      - name: Executar testes
+        run: npm test
+      - name: Compilar frontend
+        run: npm run build
+
+  deploy:
+    name: Publicar no Heroku
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend]
+    uses: ./.github/workflows/dotnetCD.yml
+    secrets:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}

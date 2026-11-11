@@ -1,5 +1,7 @@
 # Vezza
 
+[![CI](https://github.com/mgmsystem/vezza/actions/workflows/dotnetCI.yml/badge.svg?branch=main)](https://github.com/mgmsystem/vezza/actions/workflows/dotnetCI.yml)
+
 O Vezza é uma aplicação full stack para gestão de clientes, obras, orçamentos e itens de orçamento. O projeto foi construído como portfólio técnico, com backend ASP.NET Core em camadas, frontend React independente, autenticação JWT, persistência MySQL e testes automatizados.
 
 ```text
@@ -24,6 +26,8 @@ Cliente → Obra → Orçamento → Itens do orçamento
 ## Acesso de demonstração
 
 O ambiente público de portfólio utiliza uma conta exclusiva e dados descartáveis:
+
+**[🚀 Acessar demonstração online](https://vezza-4a0fdf8591c7.herokuapp.com/login)**
 
 ```text
 E-mail: demo@vezza.app

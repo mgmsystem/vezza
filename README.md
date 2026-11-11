@@ -4,6 +4,8 @@
 
 O Vezza é uma aplicação full stack para gestão de clientes, obras, orçamentos e itens de orçamento. O projeto foi construído como portfólio técnico, com backend ASP.NET Core em camadas, frontend React independente, autenticação JWT, persistência MySQL e testes automatizados.
 
+> **Aplicação publicada:** [Acessar o Vezza no Heroku](https://vezza-4a0fdf8591c7.herokuapp.com/login)
+
 ```text
 Cliente → Obra → Orçamento → Itens do orçamento
 ```
@@ -25,20 +27,32 @@ Cliente → Obra → Orçamento → Itens do orçamento
 
 ## Acesso de demonstração
 
-O ambiente público de portfólio utiliza uma conta exclusiva e dados descartáveis:
-
-**[🚀 Acessar demonstração online](https://vezza-4a0fdf8591c7.herokuapp.com/login)**
+O ambiente público de portfólio utiliza uma conta exclusiva e dados descartáveis. Acesse a [aplicação publicada](https://vezza-4a0fdf8591c7.herokuapp.com/login) e use:
 
 ```text
 E-mail: demo@vezza.app
 Senha:  VezzaDemo2026!
 ```
 
-Na tela de login, use **Experimentar demonstração** para preencher esses campos. O botão não simula autenticação: o acesso continua sendo validado pela API e a senha permanece armazenada somente como hash no MySQL.
+Na tela de login, o botão **Experimentar demonstração** preenche automaticamente o e-mail e a senha acima. Ele não simula a autenticação: o acesso continua sendo validado pela API e a senha permanece armazenada somente como hash no MySQL.
 
 A conta pode consultar, cadastrar, editar e excluir dados de negócio. Inclusões feitas por ela são limitadas a cinco registros em cada uma destas categorias: clientes, obras, orçamentos, itens e fluxos. Excluir um registro libera uma nova inclusão. A conta demo não pode gerenciar usuários nem alterar ou recuperar sua senha.
 
-### API
+## Demonstração visual
+
+### Dashboard
+
+![Dashboard do Vezza com indicadores gerenciais, distribuição por situação e orçamentos recentes](docs/screenshots/dashboard.png)
+
+### Clientes
+
+![Listagem de clientes do Vezza com pesquisa e ações de gerenciamento](docs/screenshots/clientes.png)
+
+### Orçamentos
+
+![Listagem de orçamentos do Vezza com proposta, obra, cliente, situação e valor](docs/screenshots/orcamentos.png)
+
+## API
 
 - Endpoints autenticados para usuários, clientes, obras, orçamentos, itens e fluxos financeiros.
 - Registro, autenticação e recuperação de acesso.
